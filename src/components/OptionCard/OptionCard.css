@@ -1,0 +1,18 @@
+.option-card {
+  background-color: var(--nav-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.option-card:hover {
+  box-shadow: 0 4px 10px rgba(111, 66, 193, 0.3);
+  border-color: var(--primary-color);
+}
+
+.option-card.selected {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 12px var(--primary-color);
+  background-color: var(--accent-color);
+}

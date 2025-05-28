@@ -1,0 +1,5 @@
+.about-section {
+  background: var(--bg-color);
+  color: var(--text-color);
+  user-select: none;
+}

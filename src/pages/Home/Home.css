@@ -1,0 +1,11 @@
+.home-section {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: var(--bg-color);
+  color: var(--text-color);
+  user-select: none;
+}
+

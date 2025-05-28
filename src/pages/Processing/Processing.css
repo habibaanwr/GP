@@ -1,0 +1,6 @@
+.processing-section {
+  min-height: 60vh;
+  color: var(--text-color);
+  user-select: none;
+}
+
