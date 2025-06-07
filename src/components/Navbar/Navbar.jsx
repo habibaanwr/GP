@@ -39,13 +39,18 @@ const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item mx-2">
-              <Link to="/about" className="nav-link" style={{ color: 'var(--text-color)' }}>
-                About
+              <Link to="/results" className="nav-link" style={{ color: 'var(--text-color)' }}>
+                Summary
               </Link>
             </li>
             <li className="nav-item mx-2">
               <Link to="/chat" className="nav-link" style={{ color: 'var(--text-color)' }}>
                 Chat
+              </Link>
+            </li>
+            <li className="nav-item mx-2">
+              <Link to="/about" className="nav-link" style={{ color: 'var(--text-color)' }}>
+                About
               </Link>
             </li>
           </ul>

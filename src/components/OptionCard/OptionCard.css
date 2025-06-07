@@ -1,18 +1,46 @@
 .option-card {
-  background-color: var(--nav-bg);
-  color: var(--text-color);
+  width: 400px;
+  background-color: transparent;
+  border: 2px solid var(--primary-color) !important;
+  transition: all 0.3s ease;
   cursor: pointer;
-  user-select: none;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .option-card:hover {
-  box-shadow: 0 4px 10px rgba(111, 66, 193, 0.3);
-  border-color: var(--primary-color);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(111, 66, 193, 0.2) !important;
+  border-color: var(--primary-color) !important;
 }
 
 .option-card.selected {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 12px var(--primary-color);
-  background-color: var(--accent-color);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color) !important;
+  color: white;
+}
+
+.option-card h5 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.option-card.selected h5 {
+  color: white;
+}
+
+.option-card p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.option-card.selected p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 768px) {
+  .option-card {
+    width: 100%;
+  }
 }

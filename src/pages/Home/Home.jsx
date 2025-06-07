@@ -9,7 +9,17 @@ const Home = () => (
       <p className="lead mb-4">
         Scientific paper summarization made easy and efficient with AI-powered tools.
       </p>
-      <Link to="/upload" className="btn btn-lg btn-primary">
+      <Link 
+        to="/upload" 
+        className="btn btn-lg"
+        style={{ 
+          backgroundColor: 'var(--btn-bg)', 
+          borderColor: 'var(--btn-bg)',
+          color: 'white'
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-hover-bg)')}
+        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-bg)')}
+      >
         Get Started
       </Link>
     </div>
