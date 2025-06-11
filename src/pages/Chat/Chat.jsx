@@ -176,8 +176,8 @@ const Chat = () => {
           <div key={index} className={`chat-bubble ${message.role}`}>
             <div className="icon">
               {message.role === 'user' ? 
-                <FaUserCircle size={20} color="#f08a5d" /> : 
-                <FaRobot size={20} color="#f08a5d" />
+                <FaUserCircle size={20} color="#3a0941" /> : 
+                <FaRobot size={20} color="#d500f6" />
               }
             </div>
             <div className="message-content">{message.content}</div>

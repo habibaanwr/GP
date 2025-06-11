@@ -201,12 +201,12 @@
 }
 
 .suggested-question-btn {
-  background-color: var(--card-bg);
+  background-color: var(--nav-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.8rem 1rem;
   text-align: left;
-  color: #222;
+  color: var(--text-color);
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -227,7 +227,7 @@
 
 /* Dark theme styles for suggested questions */
 [data-theme="dark"] .suggested-questions {
-  background-color: var(--nav-bg);
+  background-color: var(--card-bg);
 }
 
 [data-theme="dark"] .suggested-question-btn {

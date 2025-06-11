@@ -37,7 +37,7 @@ const Home = () => {
   };
 
   return (
-    <section className="home-section text-center">
+  <section className="home-section text-center">
       <motion.div 
         className="container py-5"
         variants={containerVariants}
@@ -56,7 +56,7 @@ const Home = () => {
           className="lead mb-4"
           variants={itemVariants}
         >
-          Scientific paper summarization made easy and efficient with AI-powered tools.
+        Scientific paper summarization made easy and efficient with AI-powered tools.
         </motion.p>
 
         <motion.div 
@@ -119,21 +119,21 @@ const Home = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <Link 
-            to="/upload" 
+      <Link 
+        to="/upload" 
             className="btn btn-lg get-started-btn"
-            style={{ 
-              backgroundColor: 'var(--btn-bg)', 
-              borderColor: 'var(--btn-bg)',
-              color: 'white'
-            }}
-          >
-            Get Started
-          </Link>
+        style={{ 
+          backgroundColor: 'var(--btn-bg)', 
+          borderColor: 'var(--btn-bg)',
+          color: 'white'
+        }}
+      >
+        Get Started
+      </Link>
         </motion.div>
       </motion.div>
-    </section>
-  );
+  </section>
+);
 };
 
 export default Home;
