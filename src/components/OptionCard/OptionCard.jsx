@@ -3,7 +3,7 @@ import './OptionCard.css';
 
 const OptionCard = ({ title, description, onSelect, selected }) => {
   return (
-    <div
+    <div 
       className={`option-card p-3 my-3 border rounded shadow-sm ${selected ? 'selected' : ''}`}
       onClick={onSelect}
       role="button"
