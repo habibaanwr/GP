@@ -1,32 +1,23 @@
+// filepath: f:\University\GP Final\Frontend\src\pages\Chat\Chat.jsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { SessionContext } from '../../context/SessionContext';
-import { FaUserCircle, FaRobot, FaTrash } from 'react-icons/fa';
-import { askQuestionWithRetry, handleApiError } from '../../services/chatApi';
+import { FaUserCircle, FaRobot, FaTrash, FaSync, FaExclamationTriangle } from 'react-icons/fa';
+import { askQuestionWithRetry, handleApiError, getConnectionState, recoverApiConnection } from '../../services/chatApi';
 import './Chat.css';
 import './typing-indicator.css';
 
 const Chat = () => {
-  const { summary, documentId } = useContext(SessionContext);
-  
-  const [messages, setMessages] = useState(() => {
+  const { summary, documentId } = useContext(SessionContext);  const [messages, setMessages] = useState(() => {
     // Try to get messages from sessionStorage first
     const sessionMessages = sessionStorage.getItem('chatMessages');
     if (sessionMessages) {
-      const parsedMessages = JSON.parse(sessionMessages);
-      // Ensure all loaded messages are marked as complete
-      return parsedMessages.map(msg => ({ 
-        ...msg, 
-        isComplete: true, 
-        showCursor: false 
-      }));
+      return JSON.parse(sessionMessages);
     }
     // If no messages in sessionStorage but we have a summary, initialize with summary
     if (summary) {
       const initialMessage = {
         role: 'bot',
         content: `Paper Topic: ${sessionStorage.getItem('paperTopic') || ''}\n\nSummary:\n${summary || ''}`,
-        isComplete: true,
-        showCursor: false
       };
       sessionStorage.setItem('chatMessages', JSON.stringify([initialMessage]));
       return [initialMessage];
@@ -36,62 +27,11 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [typingMessageIndex, setTypingMessageIndex] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connected');
+  const [isRecovering, setIsRecovering] = useState(false);
   const messagesEndRef = useRef(null);
   const paperTopic = sessionStorage.getItem('paperTopic');
   const inputRef = useRef(null);
-  const typingIntervalRef = useRef(null);
-
-  // Function to simulate typing effect
-  const typeMessage = (fullText, messageIndex) => {
-    let currentIndex = 0;
-    setTypingMessageIndex(messageIndex);
-    
-    const typeNextCharacter = () => {
-      if (currentIndex < fullText.length) {
-        const nextChar = fullText[currentIndex];
-        
-        setMessages(prev => {
-          const newMessages = [...prev];
-          if (newMessages[messageIndex]) {
-            newMessages[messageIndex].content = fullText.substring(0, currentIndex + 1);
-            newMessages[messageIndex].showCursor = true; // Show cursor while typing
-          }
-          return newMessages;
-        });
-        
-        currentIndex++;
-        
-        // Vary typing speed based on character type
-        let delay = 15; // Default delay in ms (reduced from 30)
-        if (nextChar === ' ') delay = 25; // Reduced from 60
-        else if (nextChar === '.' || nextChar === '!' || nextChar === '?') delay = 75; // Reduced from 150
-        else if (nextChar === ',' || nextChar === ';') delay = 40; // Reduced from 100
-        else if (nextChar === '\n') delay = 80; // Reduced from 200
-        
-        typingIntervalRef.current = setTimeout(typeNextCharacter, delay);
-      } else {
-        // Typing complete
-        setMessages(prev => {
-          const newMessages = [...prev];
-          if (newMessages[messageIndex]) {
-            newMessages[messageIndex].isComplete = true;
-            newMessages[messageIndex].showCursor = false; // Hide cursor when complete
-          }
-          return newMessages;
-        });
-        setTypingMessageIndex(null);
-        setIsLoading(false);
-        
-        // Focus the input field after typing is complete
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 100);
-      }
-    };
-    
-    typeNextCharacter();
-  };
 
   // Save messages to sessionStorage whenever they change
   useEffect(() => {
@@ -112,20 +52,26 @@ const Chat = () => {
       const initialMessage = {
         role: 'bot',
         content: `Paper Topic: ${paperTopic || ''}\n\nSummary:\n${summary || ''}`,
-        isComplete: true,
-        showCursor: false
       };
       setMessages([initialMessage]);
     }
   }, [summary, paperTopic]);
-
-  // Cleanup typing effect on unmount
+  
+  // Check API connection status periodically
   useEffect(() => {
-    return () => {
-      if (typingIntervalRef.current) {
-        clearTimeout(typingIntervalRef.current);
-      }
+    const checkConnectionStatus = () => {
+      const state = getConnectionState();
+      setConnectionStatus(state.isConnected ? 'connected' : 'disconnected');
+      setIsRecovering(state.isRecovering);
     };
+    
+    // Check immediately
+    checkConnectionStatus();
+    
+    // Set up periodic checks
+    const interval = setInterval(checkConnectionStatus, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleSendMessage = async (e) => {
@@ -133,7 +79,16 @@ const Chat = () => {
     
     if (!input.trim() || isLoading) return;
     
-    const userMessage = { role: 'user', content: input.trim(), isComplete: true };
+    // Check if connection is available
+    if (connectionStatus === 'disconnected' && !isRecovering) {
+      setError({
+        message: 'API connection unavailable',
+        suggestion: 'Please check your network connection and try again.',
+        recoverable: true
+      });
+      return;
+    }
+      const userMessage = { role: 'user', content: input.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -141,29 +96,21 @@ const Chat = () => {
     
     try {
       // Add a placeholder for the bot's response
-      setMessages(prev => [...prev, { role: 'bot', content: '', isLoading: true, isComplete: false }]);
+      setMessages(prev => [...prev, { role: 'bot', content: '', isLoading: true }]);
       
       // Fetch the answer
       const response = await askQuestionWithRetry(userMessage.content, documentId);
       
-      // Start typing effect for the response
-      const messageIndex = messages.length + 1; // +1 because we added user message
+      // Replace the placeholder with the actual response
       setMessages(prev => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = { 
           role: 'bot', 
-          content: '',
-          isComplete: false,
-          isLoading: false,
-          showCursor: false // Initialize cursor state
+          content: response.answer || 'I could not generate an answer for your question.',
+          sources: response.sources
         };
         return newMessages;
       });
-      
-      // Start typing the response
-      const responseText = response.answer || 'I could not generate an answer for your question.';
-      typeMessage(responseText, messageIndex);
-      
     } catch (err) {
       console.error('Error sending message:', err);
       
@@ -180,14 +127,11 @@ const Chat = () => {
         { 
           role: 'bot', 
           content: `I encountered an error: \n\n${errorInfo?.message || 'Unknown error'}`,
-          isError: true,
-          isComplete: true,
-          showCursor: false
+          isError: true
         }
-      ]);
+      ]);    } finally {
       setIsLoading(false);
-      
-      // Focus the input field after error
+      // Focus the input field after sending
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
@@ -196,20 +140,39 @@ const Chat = () => {
 
   const clearChat = () => {
     if (window.confirm('Are you sure you want to clear the chat history?')) {
-      // Clear any ongoing typing
-      if (typingIntervalRef.current) {
-        clearTimeout(typingIntervalRef.current);
-      }
-      setTypingMessageIndex(null);
-      
       setMessages(summary ? [{
         role: 'bot',
         content: `Paper Topic: ${paperTopic || ''}\n\nSummary:\n${summary || ''}`,
-        isComplete: true,
-        showCursor: false
       }] : []);
       sessionStorage.removeItem('chatMessages');
       setError(null);
+    }
+  };
+  
+  const attemptConnectionRecovery = async () => {
+    setIsRecovering(true);
+    try {
+      const success = await recoverApiConnection();
+      if (success) {
+        setConnectionStatus('connected');
+        setError(null);
+      } else {
+        setConnectionStatus('disconnected');
+        setError({
+          message: 'Connection recovery failed',
+          suggestion: 'Please ensure the API server is running and try again later.',
+          recoverable: true
+        });
+      }
+    } catch (err) {
+      console.error('Error recovering connection:', err);
+      setError({
+        message: 'Error recovering connection',
+        suggestion: 'Please refresh the page and try again.',
+        recoverable: false
+      });
+    } finally {
+      setIsRecovering(false);
     }
   };
 
@@ -224,10 +187,33 @@ const Chat = () => {
         )}
       </div>
       
+      {connectionStatus === 'disconnected' && (
+        <div className="connection-alert">
+          <FaExclamationTriangle /> API connection unavailable
+          <button 
+            onClick={attemptConnectionRecovery} 
+            disabled={isRecovering}
+            className="recovery-btn"
+          >
+            {isRecovering ? <FaSync className="spinning" /> : <FaSync />} 
+            {isRecovering ? 'Reconnecting...' : 'Reconnect'}
+          </button>
+        </div>
+      )}
+      
       {error && error.message && !error.isHandled && (
         <div className="error-alert">
           <strong>Error:</strong> {error.message}
           {error.suggestion && <div><strong>Suggestion:</strong> {error.suggestion}</div>}
+          {error.recoverable && (
+            <button 
+              onClick={attemptConnectionRecovery} 
+              disabled={isRecovering}
+              className="retry-btn"
+            >
+              {isRecovering ? 'Retrying...' : 'Retry Connection'}
+            </button>
+          )}
         </div>
       )}
 
@@ -252,16 +238,28 @@ const Chat = () => {
                 </div>
               ) : (
                 <div className="message-text">
-                  {(message.content || '').split('\n').map((line, i, lines) => (
+                  {message.content.split('\n').map((line, i) => (
                     <React.Fragment key={i}>
                       {line}
-                      {/* Show cursor at the end of the last line while typing */}
-                      {message.showCursor && i === lines.length - 1 && (
-                        <span className="typing-cursor">|</span>
-                      )}
                       <br />
                     </React.Fragment>
                   ))}
+                  
+                  {message.sources && message.sources.length > 0 && (
+                    <div className="message-sources">
+                      <strong>Sources:</strong>
+                      <ul>
+                        {message.sources.map((source, i) => (
+                          <li key={i}>
+                            {source.page_number && <span>Page {source.page_number}: </span>}
+                            {source.text.length > 150 
+                              ? `${source.text.substring(0, 150)}...` 
+                              : source.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -276,12 +274,12 @@ const Chat = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your question here..."
-          disabled={isLoading || typingMessageIndex !== null}
+          disabled={isLoading || connectionStatus === 'disconnected'}
           ref={inputRef}
         />
         <button 
           type="submit" 
-          disabled={!input.trim() || isLoading || typingMessageIndex !== null}
+          disabled={!input.trim() || isLoading || connectionStatus === 'disconnected'}
         >
           {isLoading ? 'Sending...' : 'Send'}
         </button>
