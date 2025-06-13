@@ -9,6 +9,7 @@ const Results = () => {
   const navigate = useNavigate();
   const [paperTopic, setPaperTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
     if (!summary) {
       navigate('/upload');
@@ -17,40 +18,42 @@ const Results = () => {
   useEffect(() => {
     const fetchPaperTopic = async () => {
       if (!summary) return;
-      
       setIsLoading(true);
       try {
-        // Try multiple approaches to get the paper topic
-        let topic = null;
+        // Get processing option from sessionStorage
+        const processingOption = sessionStorage.getItem('processingOption');
         
-        // First approach: Use the dedicated paper-topic endpoint
-        try {
-          const response = await fetch('http://localhost:5000/api/paper-topic', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: summary }),
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            topic = data.topic;
-          }
-        } catch (topicError) {
-          console.warn('Error using paper-topic endpoint:', topicError);
-          // Continue to fallback methods
+        // Check if we already have a paper topic from the custom-models API
+        const storedTopic = sessionStorage.getItem('paperTopic');
+        if (storedTopic && storedTopic !== 'Unknown' && processingOption === 'custom-models') {
+          setPaperTopic(storedTopic);
+          setIsLoading(false);
+          return;
         }
         
-        // Second approach: Attempt to extract from summary content if first approach failed
+        let topic = null;
+        // Use the provided /predict endpoint for external-api-full
+        try {
+          const response = await fetch('http://20.75.49.202:8010/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: summary })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.predicted_label) topic = data.predicted_label;
+            else if (data && data.topic) topic = data.topic;
+          }
+        } catch (topicError) {
+          console.warn('Error using /predict endpoint:', topicError);
+        }
+        // Fallback: use previous logic if /predict fails
         if (!topic) {
-          // Simple pattern matching to find potential topic indicators in the summary
           const topicPatterns = [
             /(?:paper|article|research|study) (?:on|about|discusses|examines|investigates|explores) (.+?)[.]/i,
             /(?:in the field of|in) (.+?)[,.](?=\s)/i,
             /(?:focuses on|addresses) (.+?)[.]/i
           ];
-          
           for (const pattern of topicPatterns) {
             const match = summary.match(pattern);
             if (match && match[1] && match[1].length > 3 && match[1].length < 100) {
@@ -59,18 +62,13 @@ const Results = () => {
             }
           }
         }
-        
-        // Set a default if we still couldn't extract a topic
         if (!topic) {
           topic = 'Academic Research';
         }
-        
         setPaperTopic(topic);
         sessionStorage.setItem('paperTopic', topic);
       } catch (error) {
         console.error('Error determining paper topic:', error);
-        
-        // Fallback to a generic topic
         const fallbackTopic = 'Scientific Paper';
         setPaperTopic(fallbackTopic);
         sessionStorage.setItem('paperTopic', fallbackTopic);
@@ -78,7 +76,6 @@ const Results = () => {
         setIsLoading(false);
       }
     };
-
     if (summary) {
       fetchPaperTopic();
     }

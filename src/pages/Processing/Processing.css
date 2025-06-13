@@ -9,10 +9,58 @@
   user-select: none;
 }
 
-.spinner-border {
+.model-info {
+  max-width: 600px;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: var(--bg-color);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.model-info .badge {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background-color: var(--secondary-color);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.model-info .small {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+.processing-section .spinner-border {
   width: 3rem;
   height: 3rem;
   border-width: 0.25rem;
+  border-style: solid;
+  border-radius: 50%;
+  border-top: 0.25rem solid var(--primary-color, #ff69b4);
+  border-right: 0.25rem solid #eee;
+  border-bottom: 0.25rem solid #eee;
+  border-left: 0.25rem solid #eee;
+  animation: spinner-rotate 0.8s linear infinite !important;
+  display: inline-block;
+}
+
+.processing-section .spinner-border {
+  --bs-spinner-animation-speed: 0.8s !important;
+  --bs-spinner-animation-name: spinner-rotate !important;
+}
+
+@keyframes spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-icon {
@@ -70,4 +118,3 @@
   outline: none !important;
   box-shadow: none !important;
 }
-

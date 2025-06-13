@@ -5,12 +5,10 @@
 // API configuration
 export const API_CONFIG = {
   // Base URL for the API
-  BASE_URL: 'http://localhost:8010',
+  BASE_URL: 'http://20.64.145.29:8010',
   
-  // Fallback URLs to try if the primary URL fails
-  FALLBACK_URLS: [
-    'http://localhost:8010'
-  ],
+  // Base URL for the custom models API
+  CUSTOM_MODELS_URL: 'http://localhost:8000',
   
   // No timeout for API requests - wait indefinitely
   TIMEOUT: 0,

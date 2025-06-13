@@ -12,12 +12,12 @@ const options = [
   {
     key: 'custom-models',
     title: 'AI-Powered Summary',
-    description: 'Get a comprehensive summary using our advanced AI models, optimized for scientific papers with accurate handling of text, tables, and figures. This option uses our in-house models for faster processing.',
+    description: 'Get a comprehensive summary using our specialized in-house models, optimized for scientific papers with accurate handling of text, tables, and figures. This option offers faster processing and specialized scientific paper analysis.',
   },
   {
     key: 'external-api-full',
     title: 'Expert Analysis',
-    description: 'Use external large language models (LLMs) to analyze and summarize your paper. This option provides deeper insights but may take longer to process. Recommended for complex papers requiring detailed analysis.',
+    description: 'Use external large language models (LLMs) to analyze and summarize your paper. This option provides deeper contextual insights and nuanced understanding but may take longer to process. Recommended for complex papers requiring detailed analysis.',
   },
 ];
 
@@ -168,22 +168,22 @@ const Upload = () => {
       sessionStorage.removeItem('currentChat');
       sessionStorage.removeItem('chatContext');
       sessionStorage.removeItem('chatState');
-      
+      // Proactively clear any previous documentId from both sessionStorage and localStorage
+      sessionStorage.removeItem('documentId');
+      localStorage.removeItem('documentId');
       // Store summary length and processing option in sessionStorage
       if (summaryLength) {
         sessionStorage.setItem('summaryLength', summaryLength.toString());
+      }
       sessionStorage.setItem('processingOption', selectedOption);
       sessionStorage.setItem('uploadStatus', 'pending');
-      
       // Navigate to processing page immediately
-      }
       navigate('/processing');
-      
-      // Start the file upload after navigation
-      const response = await ingestDocument(file);
-      
+      // Start the file upload after navigation - pass the processing option
+      const response = await ingestDocument(file, selectedOption);
       // Save the document ID and update upload status
       sessionStorage.setItem('documentId', response.document_id);
+      localStorage.setItem('documentId', response.document_id);
       sessionStorage.setItem('uploadStatus', 'completed');
       setDocumentId(response.document_id);
     } catch (error) {

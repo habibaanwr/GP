@@ -8,37 +8,25 @@ export const SessionProvider = ({ children }) => {
   const [processingOption, setProcessingOption] = useState(() => localStorage.getItem('processingOption') || '');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [documentId, setDocumentId] = useState(() => localStorage.getItem('documentId') || '');
-  const [sessionError, setSessionError] = useState(null);
-  const [sessionInfo, setSessionInfo] = useState(() => {
+  const [sessionError, setSessionError] = useState(null);  const [sessionInfo, setSessionInfo] = useState(() => {
     const savedInfo = localStorage.getItem('sessionInfo');
     return savedInfo ? JSON.parse(savedInfo) : {
-      lastActiveTimestamp: Date.now(),
-      documentCount: 0,
-      documentHistory: []
+      lastActiveTimestamp: Date.now()
     };
-  });  // Update session info when document ID changes
+  });  
+    // Update session info when document ID changes
   useEffect(() => {
     if (documentId) {
       const now = Date.now();
       setSessionInfo(prevInfo => {
         const updatedInfo = {
-          ...prevInfo,
-          lastActiveTimestamp: now,
-          documentCount: prevInfo.documentCount + 1,
-          documentHistory: [
-            {
-              id: documentId,
-              timestamp: now,
-              processingOption
-            },
-            ...prevInfo.documentHistory.filter(doc => doc.id !== documentId)
-          ].slice(0, 10) // Keep only last 10 documents
+          lastActiveTimestamp: now
         };
         localStorage.setItem('sessionInfo', JSON.stringify(updatedInfo));
         return updatedInfo;
       });
     }
-  }, [documentId, processingOption]);
+  }, [documentId]);
 
   // Persist session data to localStorage
   useEffect(() => {
@@ -65,8 +53,7 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('documentId', documentId);
   }, [documentId]);
-  
-  // More robust session reset
+    // More robust session reset
   const resetSession = () => {
     setSummary('');
     setChatHistory([]);
@@ -74,9 +61,8 @@ export const SessionProvider = ({ children }) => {
     setDocumentId('');
     setSessionError(null);
     
-    // Keep session info history but update timestamp
+    // Update timestamp
     setSessionInfo({
-      ...sessionInfo,
       lastActiveTimestamp: Date.now()
     });
     
@@ -93,23 +79,19 @@ export const SessionProvider = ({ children }) => {
     localStorage.removeItem('processingOption');
     localStorage.removeItem('documentId');
   };
-  
-  /**
+    /**
    * Recover previous session by document ID
    * @param {string} docId - The document ID to recover
    * @returns {boolean} - Whether recovery was successful
    */
   const recoverSession = (docId) => {
     try {
-      // Find the document in history
-      const docEntry = sessionInfo.documentHistory.find(doc => doc.id === docId);
-      if (!docEntry) {
-        setSessionError('Document not found in session history');
+      if (!docId) {
+        setSessionError('No document ID provided');
         return false;
       }
       
       setDocumentId(docId);
-      setProcessingOption(docEntry.processingOption || '');
       
       // Update session info
       const updatedInfo = {

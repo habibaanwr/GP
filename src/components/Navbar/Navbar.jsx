@@ -9,6 +9,9 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const handleUploadNewPaper = () => {
+    // Remove documentId from both sessionStorage and localStorage
+    sessionStorage.removeItem('documentId');
+    localStorage.removeItem('documentId');
     resetSession();
     navigate('/upload');
   };

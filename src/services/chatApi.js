@@ -25,6 +25,14 @@ export const recoverApiConnection = async () => {
 };
 
 /**
+ * Get the processing option from sessionStorage
+ * @returns {string} - The processing option ('custom-models' or 'external-api-full')
+ */
+export const getProcessingOption = () => {
+  return sessionStorage.getItem('processingOption') || 'external-api-full';
+};
+
+/**
  * Wrapper for askQuestion with retries
  * @param {string} query - The question to ask
  * @param {string} documentId - Optional document ID to restrict the question to
@@ -35,10 +43,11 @@ export const askQuestionWithRetry = async (query, documentId = null, topK = 5) =
   const maxRetries = API_CONFIG.RETRY.MAX_RETRIES;
   let retries = 0;
   let lastError = null;
+  const processingOption = getProcessingOption();
   
   while (retries <= maxRetries) {
     try {
-      const result = await baseAskQuestion(query, documentId, topK);
+      const result = await baseAskQuestion(query, documentId, topK, processingOption);
       return result;
     } catch (error) {
       lastError = error;
@@ -79,10 +88,11 @@ export const getFollowUpQuestionsWithRetry = async (query, documentId = null) =>
   const maxRetries = API_CONFIG.RETRY.MAX_RETRIES;
   let retries = 0;
   let lastError = null;
+  const processingOption = getProcessingOption();
   
   while (retries <= maxRetries) {
     try {
-      const result = await baseGetFollowUpQuestions(query, documentId);
+      const result = await baseGetFollowUpQuestions(query, documentId, processingOption);
       return result;
     } catch (error) {
       lastError = error;
