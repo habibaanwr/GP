@@ -10,8 +10,8 @@ body {
 /* CSS Variables for themes */
 :root {
   --primary-color: #6f42c1;
-  --secondary-color: #f08a5d;
-  --accent-color: #f06c14;
+  --secondary-color: #9b7cb5;
+  --accent-color: #3a0941;
   --bg-color: #fefefe;
   --text-color: #333333;
   --nav-bg: #ffffff;
@@ -22,7 +22,8 @@ body {
 
 /* Dark theme overrides */
 body.dark {
-  --bg-color: #121212;
+  --primary-color: #9e70f4;
+  --bg-color: #212121;
   --text-color: #eee;
   --nav-bg: #1f1f1f;
   --footer-bg: #1a1a1a;

@@ -39,6 +39,20 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Dark theme specific styles */
+[data-theme="dark"] .option-card {
+  background-color: var(--card-bg-dark);
+  border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .option-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .rag-description {
+  color: var(--text-muted-dark);
+}
+
 @media (max-width: 768px) {
   .option-card {
     width: 100%;

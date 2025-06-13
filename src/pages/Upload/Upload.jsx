@@ -27,9 +27,9 @@ const Upload = () => {
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState(null);
-  const [summaryLength, setSummaryLength] = useState(250); // Default length
-  const [lengthError, setLengthError] = useState(''); // Separate error state for length
-  const [tempLength, setTempLength] = useState(''); // Temporary state for typing
+  const [summaryLength, setSummaryLength] = useState('');
+  const [lengthError, setLengthError] = useState('');
+  const [tempLength, setTempLength] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -75,6 +75,11 @@ const Upload = () => {
   };
 
   const validateLength = (value) => {
+    if (value === '') {
+      setLengthError('');
+      return true;
+    }
+
     const numValue = parseInt(value);
     
     if (isNaN(numValue)) {
@@ -100,9 +105,9 @@ const Upload = () => {
     const value = e.target.value;
     setTempLength(value);
     
-    // Only update the actual summary length if it's a valid number
     if (value === '') {
       setSummaryLength('');
+      setLengthError('');
     } else {
       const numValue = parseInt(value);
       if (!isNaN(numValue)) {
@@ -113,7 +118,7 @@ const Upload = () => {
 
   const handleSummaryLengthBlur = () => {
     if (tempLength === '') {
-      setLengthError('Please enter a summary length');
+      setLengthError('');
       return;
     }
 
@@ -148,7 +153,7 @@ const Upload = () => {
       setError('Please upload a PDF file.');
       return;
     }
-    if (!validateLength(tempLength)) {
+    if (tempLength && !validateLength(tempLength)) {
       return;
     }
 
@@ -165,11 +170,13 @@ const Upload = () => {
       sessionStorage.removeItem('chatState');
       
       // Store summary length and processing option in sessionStorage
-      sessionStorage.setItem('summaryLength', summaryLength.toString());
+      if (summaryLength) {
+        sessionStorage.setItem('summaryLength', summaryLength.toString());
       sessionStorage.setItem('processingOption', selectedOption);
       sessionStorage.setItem('uploadStatus', 'pending');
       
       // Navigate to processing page immediately
+      }
       navigate('/processing');
       
       // Start the file upload after navigation
@@ -240,7 +247,7 @@ const Upload = () => {
         </div>
         
         <div className="mb-3">
-          <label htmlFor="summaryLength" className="form-label">Summary Length (words):</label>
+          <label htmlFor="summaryLength" className="form-label">Summary Length (words) - Optional:</label>
           <input
             id="summaryLength"
             type="number"
@@ -251,10 +258,10 @@ const Upload = () => {
             onBlur={handleSummaryLengthBlur}
             className={`form-control ${lengthError ? 'is-invalid' : ''}`}
             aria-describedby="lengthHelp"
-            placeholder="Enter length (50-500 words)"
+            placeholder="Enter length (50-500 words) or leave empty for default"
           />
           <div id="lengthHelp" className="form-text">
-            Enter desired summary length (50-500 words)
+            Optional: Enter desired summary length (50-500 words). Leave empty for default length.
           </div>
           {lengthError && (
             <div className="invalid-feedback">
@@ -302,7 +309,7 @@ const Upload = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={!file || !selectedOption || !tempLength || isLoading}
+            disabled={!file || !selectedOption || isLoading}
             style={{ backgroundColor: 'var(--btn-bg)', borderColor: 'var(--btn-bg)' }}
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-hover-bg)')}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-bg)')}

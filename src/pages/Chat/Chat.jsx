@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { SessionContext } from '../../context/SessionContext';
-import { FaUserCircle, FaRobot, FaTrash } from 'react-icons/fa';
+import { FaUserCircle, FaRobot, FaTrash, FaLightbulb } from 'react-icons/fa';
 import { askQuestionWithRetry, handleApiError } from '../../services/chatApi';
 import './Chat.css';
 import './typing-indicator.css';
@@ -34,6 +34,8 @@ const Chat = () => {
     return [];
   });
   const [input, setInput] = useState('');
+  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [typingMessageIndex, setTypingMessageIndex] = useState(null);
@@ -191,6 +193,23 @@ const Chat = () => {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
+    // Clear suggested questions when a message is sent
+    setSuggestedQuestions([]);
+
+    // Simulate bot response and generate new questions
+    setTimeout(async () => {
+      const botMessage = { role: 'bot', content: `Echo: ${input}` };
+      setMessages((prev) => [...prev, botMessage]);
+      
+      // Generate new suggested questions after bot response
+      await generateNewQuestions();
+    }, 1000);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -211,17 +230,86 @@ const Chat = () => {
       sessionStorage.removeItem('chatMessages');
       setError(null);
     }
+    setSuggestedQuestions([]);
+  };
+
+  const generateNewQuestions = async () => {
+    setIsLoadingQuestions(true);
+    try {
+      // TODO: Replace with actual API call to your backend
+      // This is a mock implementation
+      const mockQuestions = [
+        "Can you elaborate on the methodology used?",
+        "What are the key assumptions in this research?",
+        "How do these findings impact the field?",
+        "What future research directions are suggested?"
+      ];
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSuggestedQuestions(mockQuestions);
+    } catch (error) {
+      console.error('Error fetching suggested questions:', error);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  };
+
+  const requestSuggestedQuestions = async () => {
+    setIsLoadingQuestions(true);
+    try {
+      // TODO: Replace with actual API call to your backend
+      // This is a mock implementation
+      const mockQuestions = [
+        "What are the main findings of this research?",
+        "How does this study compare to previous work in the field?",
+        "What are the limitations of the methodology used?",
+        "What are the potential applications of these findings?"
+      ];
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSuggestedQuestions(mockQuestions);
+    } catch (error) {
+      console.error('Error fetching suggested questions:', error);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  };
+
+  const handleQuestionClick = (question) => {
+    setInput(question);
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <h2>Chat with the Document</h2>
-        {messages.length > 0 && (
-          <button onClick={clearChat} className="clear-chat-btn">
-            <FaTrash /> Clear Chat
+    <section className="chat-section container py-4 d-flex flex-column" aria-label="Chat with summary bot">
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <h2 style={{ color: 'var(--primary-color)', textAlign: 'center' }}>Chat About Summary</h2>
+        <div className="d-flex gap-2">
+          <button 
+            className="btn btn-primary btn-sm" 
+            onClick={requestSuggestedQuestions}
+            disabled={isLoadingQuestions}
+            aria-label="Get suggested questions"
+            style={{ 
+              backgroundColor: 'var(--btn-bg)', 
+              borderColor: 'var(--btn-bg)',
+              color: 'white'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-hover-bg)')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--btn-bg)')}
+          >
+            <FaLightbulb className="me-1" />
+            {isLoadingQuestions ? 'Loading...' : 'Suggest Questions'}
           </button>
-        )}
+          <button 
+            className="btn btn-outline-danger btn-sm" 
+            onClick={clearChat} 
+            aria-label="Clear chat"
+          >
+            <FaTrash className="me-1" /> Clear
+          </button>
+        </div>
       </div>
       
       {error && error.message && !error.isHandled && (
@@ -239,6 +327,12 @@ const Chat = () => {
         )}
         
         {messages.map((message, index) => (
+          <div key={index} className={`chat-bubble ${message.role}`}>
+            <div className="icon">
+              {message.role === 'user' ? 
+                <FaUserCircle size={20} color="#3a0941" /> : 
+                <FaRobot size={20} color="#d500f6" />
+              }
           <div key={index} className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
             <div className="message-avatar">
               {message.role === 'user' ? <FaUserCircle /> : <FaRobot />}
@@ -267,6 +361,22 @@ const Chat = () => {
             </div>
           </div>
         ))}
+        {suggestedQuestions.length > 0 && (
+          <div className="suggested-questions">
+            <h4 className="suggested-questions-title">Suggested Questions:</h4>
+            <div className="suggested-questions-list">
+              {suggestedQuestions.map((question, index) => (
+                <button
+                  key={index}
+                  className="suggested-question-btn"
+                  onClick={() => handleQuestionClick(question)}
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
